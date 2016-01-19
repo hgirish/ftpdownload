@@ -1,7 +1,7 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
 using System.Data;
 using System.Data.OleDb;
+using System.Data.SqlClient;
 
 namespace FtpDownload
 {
@@ -9,19 +9,19 @@ namespace FtpDownload
     {
         public DataTable GetYourData()
         {
-            DataTable data = new DataTable();
+            var data = new DataTable();
             var connectionString = ConfigurationManager.ConnectionStrings["vfpConnectionString"].ConnectionString;
-            OleDbConnection handle = new OleDbConnection(connectionString);
+            var handle = new OleDbConnection(connectionString);
 
-          // Open the connection, and if open successfully, you can try to query it
+            // Open the connection, and if open successfully, you can try to query it
             handle.Open();
 
             if (handle.State == ConnectionState.Open)
             {
-                string mySQL = "select * from Reprint";  // dbf table name
+                var mySQL = "select * from Reprint"; // dbf table name
 
-                OleDbCommand myQuery = new OleDbCommand(mySQL, handle);
-                OleDbDataAdapter da = new OleDbDataAdapter(myQuery);
+                var myQuery = new OleDbCommand(mySQL, handle);
+                var da = new OleDbDataAdapter(myQuery);
 
                 da.Fill(data);
 
@@ -31,14 +31,14 @@ namespace FtpDownload
             return data;
         }
 
-        public void InsertFtpRecord(FileDetail fileDetail)
+        public bool InsertFtpRecord(FileDetail fileDetail)
         {
             var lcsql =
                 "insert into MasterFtp(FileName, CreateTime, Folder, Records, DlTime) values ( ?, ?,?,?,?)";
 
 
-            string connectionString = ConfigurationManager.ConnectionStrings["vfpConnectionString"].ConnectionString;
-            using (OleDbConnection connection = new OleDbConnection(connectionString))
+            var connectionString = ConfigurationManager.ConnectionStrings["vfpConnectionString"].ConnectionString;
+            using (var connection = new OleDbConnection(connectionString))
             {
                 connection.Open();
                 using (var command = connection.CreateCommand())
@@ -47,7 +47,7 @@ namespace FtpDownload
 
                     command.ExecuteNonQuery();
                 }
-                using (OleDbCommand command = connection.CreateCommand())
+                using (var command = connection.CreateCommand())
                 {
                     command.CommandText = lcsql;
                     command.Parameters.AddWithValue("FileName", fileDetail.FileName);
@@ -55,18 +55,74 @@ namespace FtpDownload
                     command.Parameters.AddWithValue("Folder", fileDetail.Folder);
                     command.Parameters.AddWithValue("Records", fileDetail.Records);
                     command.Parameters.AddWithValue("DlTime", fileDetail.DownloadTime);
-                 //   command.Parameters.AddWithValue("JobNum", string.Empty);
-                  //  command.Parameters.AddWithValue("DbfName", string.Empty);
-                   // command.Parameters.AddWithValue("NotifyDate", DateTime.MinValue);
-                  //  command.Parameters.AddWithValue("PickupDate", DateTime.MinValue);
-                   // command.Parameters.AddWithValue("UsShipDate", DBNull.Value);
 
                     //connection.Open();
-                    command.ExecuteNonQuery();
+                    var retval = command.ExecuteNonQuery();
+                    var success = (retval == 1);
+                    return success;
                 }
             }
 
 
+        }
+
+        public bool InsertSqlFtpRecord(FileDetail detail)
+        {
+            var connString = ConfigurationManager.ConnectionStrings["DatabaseContext"].ConnectionString;
+            var sql =
+                "insert into MasterFtp(FileName, CreateTime, Folder, Records, DlTime) values ( @fileName, @createTime,@folder,@Records,@dlTime)";
+            using (var conn = new SqlConnection())
+            {
+                conn.ConnectionString = connString;
+                conn.Open();
+                var cmd = new SqlCommand(sql, conn);
+                var p = new SqlParameter
+                {
+                    ParameterName = "@fileName",
+                    DbType = DbType.String,
+                    Value = detail.FileName
+                };
+                cmd.Parameters.Add(p);
+
+                p = new SqlParameter
+                {
+                    ParameterName = "@createTime",
+                    DbType = DbType.DateTime,
+                    Value = detail.FileDate
+                };
+                cmd.Parameters.Add(p);
+
+
+                p = new SqlParameter
+                {
+                    ParameterName = "@folder",
+                    DbType = DbType.String,
+                    Value = detail.Folder
+                };
+                cmd.Parameters.Add(p);
+
+
+                p = new SqlParameter
+                {
+                    ParameterName = "@records",
+                    DbType = DbType.Int32,
+                    Value = detail.Records
+                };
+                cmd.Parameters.Add(p);
+
+
+                p = new SqlParameter
+                {
+                    ParameterName = "@dlTime",
+                    DbType = DbType.DateTime,
+                    Value = detail.DownloadTime
+                };
+                cmd.Parameters.Add(p);
+
+                var retval = cmd.ExecuteNonQuery();
+                var success = (retval == 1);
+                return success;
+            }
         }
     }
 }

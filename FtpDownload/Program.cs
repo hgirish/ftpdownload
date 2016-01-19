@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.IO;
@@ -9,11 +10,13 @@ namespace FtpDownload
     class Program
     {
         private static FoxproHelper _dbHelper;
+        private static  IList<FileDetail> _list;
         static void Main(string[] args)
         {
             //ReadFoxproTable();
             //return;
              _dbHelper = new FoxproHelper();
+            _list = new List<FileDetail>();
             //InsertRecord();
             //return;
             var siteurl = ConfigurationManager.AppSettings["ftpUrl"];
@@ -28,19 +31,37 @@ namespace FtpDownload
                // Console.WriteLine($"File Name: {ftpinfo.Filename}, File Type: {ftpinfo.FileType}");
                 GetFtpFiles(ftpinfo, ftp, siteurl);
             }
-            
+            foreach (var detail in _list)
+            {
+                var fileName = detail.FileName;
+                Console.WriteLine($"Inserting {fileName} into master ftp dbf");
+                if (_dbHelper.InsertFtpRecord(detail))
+                {
+                    Console.WriteLine($"Inserted {fileName} into master ftp dbf successfully");
+                }
+                Console.WriteLine($"Inserting {fileName} into master ftp sql");
+                if (_dbHelper.InsertSqlFtpRecord(detail))
+                {
+                    Console.WriteLine($"Inserted {fileName} into master ftp sql successfully");
+                }
+            }
 
         }
 
         private static void InsertRecord()
         {
-            FileDetail detail = new FileDetail();
-            detail.DownloadTime = DateTime.Now;
-            detail.FileDate = DateTime.Now;
-            detail.FileName = "TEST";
-            detail.Folder = "TEST";
-            detail.Records = 99;
+            FileDetail detail = new FileDetail
+            {
+                DownloadTime = DateTime.Now,
+                FileDate = DateTime.Now,
+                FileName = "TEST",
+                Folder = "TEST",
+                Records = 99
+            };
+            Console.WriteLine($"Inserting {detail.FileName} into master ftp dbf");
             _dbHelper.InsertFtpRecord(detail);
+            Console.WriteLine($"Inserting {detail.FileName} into master ftp sql");
+            _dbHelper.InsertSqlFtpRecord(detail);
         }
         private static void ReadFoxproTable()
         {
@@ -130,8 +151,8 @@ namespace FtpDownload
                                 Folder = folder,
                                 Records = lineCount - 2
                             };
-
-                            _dbHelper.InsertFtpRecord(fileDetail);
+                            _list.Add(fileDetail);
+                            //_dbHelper.InsertFtpRecord(fileDetail);
                         }
                     }
                 }
