@@ -31,6 +31,11 @@ namespace FtpDownload
                // Console.WriteLine($"File Name: {ftpinfo.Filename}, File Type: {ftpinfo.FileType}");
                 GetFtpFiles(ftpinfo, ftp, siteurl);
             }
+            if (!_list.Any())
+            {
+                Console.WriteLine("No new files found!");
+                return;
+            }
             foreach (var detail in _list)
             {
                 var fileName = detail.FileName;
@@ -123,7 +128,7 @@ namespace FtpDownload
                             Directory.CreateDirectory(folderFullPath);
                         }
                         var ftpFileName = Path.Combine(folderFullPath, fileName);
-                        Console.WriteLine($"Name: {subFile.Filename}\tSize: {subFile.Size}");
+                      //  Console.WriteLine($"Name: {subFile.Filename}\tSize: {subFile.Size}");
                         if (File.Exists(ftpFileName))
                         {
                            // Console.WriteLine($"{ftpFileName} already exists");
