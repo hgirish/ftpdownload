@@ -13,10 +13,18 @@ namespace FtpDownload
         private static  IList<FileDetail> _list;
         static void Main(string[] args)
         {
-            //ReadFoxproTable();
+           //ReadFoxproTable();
             //return;
              _dbHelper = new FoxproHelper();
             _list = new List<FileDetail>();
+            //_list.Add(new FileDetail
+            //{
+            //    FileName = "Test.rtf",
+            //    Records = 100,
+            //    DownloadTime = DateTime.Now,
+            //    FileDate = DateTime.Now,
+            //    Folder = "Hands"
+            //});
             //InsertRecord();
             //return;
             var siteurl = ConfigurationManager.AppSettings["ftpUrl"];
@@ -50,7 +58,15 @@ namespace FtpDownload
                     Console.WriteLine($"Inserted {fileName} into master ftp sql successfully");
                 }
             }
+            SendEmail();
 
+        }
+
+        private static void SendEmail()
+        {
+            Console.WriteLine("Emailing files");
+            var emailHelper = new EmailHeler();
+            emailHelper.SendEmail(_list);
         }
 
         private static void InsertRecord()

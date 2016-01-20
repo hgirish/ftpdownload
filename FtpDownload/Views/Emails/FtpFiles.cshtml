@@ -1,0 +1,24 @@
+﻿@model dynamic
+To: @Model.To
+Subject: FTP File Downloaded today
+
+<table border="1" cellpadding="10" cellspacing="5" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; ">
+    <thead>
+    <tr>
+        <th>File Name</th>
+        <th>Records</th>
+        <th>Upload Time</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (FtpDownload.FileDetail d in Model.FileList)
+    {
+        <tr>
+            <td>@d.FileName</td>
+            <td>@d.Records</td>
+            <td>@d.FileDate</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
