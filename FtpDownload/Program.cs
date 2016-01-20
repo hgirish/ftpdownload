@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data;
 using System.IO;
 using System.Linq;
+using Serilog;
 
 namespace FtpDownload
 {
@@ -13,6 +14,11 @@ namespace FtpDownload
         private static  IList<FileDetail> _list;
         static void Main(string[] args)
         {
+            var log = new LoggerConfiguration()
+                .WriteTo.RollingFile("AppLog.txt")
+                .WriteTo.ColoredConsole()
+                .CreateLogger();
+            Log.Logger = log;
            //ReadFoxproTable();
             //return;
              _dbHelper = new FoxproHelper();
@@ -48,17 +54,38 @@ namespace FtpDownload
             {
                 var fileName = detail.FileName;
                 Console.WriteLine($"Inserting {fileName} into master ftp dbf");
-                if (_dbHelper.InsertFtpRecord(detail))
+                try
                 {
-                    Console.WriteLine($"Inserted {fileName} into master ftp dbf successfully");
+                    if (_dbHelper.InsertFtpRecord(detail))
+                    {
+                        Console.WriteLine($"Inserted {fileName} into master ftp dbf successfully");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.Message);
                 }
                 Console.WriteLine($"Inserting {fileName} into master ftp sql");
-                if (_dbHelper.InsertSqlFtpRecord(detail))
+                try
                 {
-                    Console.WriteLine($"Inserted {fileName} into master ftp sql successfully");
+                    if (_dbHelper.InsertSqlFtpRecord(detail))
+                    {
+                        Console.WriteLine($"Inserted {fileName} into master ftp sql successfully");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.Message);
                 }
             }
-            SendEmail();
+            try
+            {
+                SendEmail();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+            }
 
         }
 
@@ -66,7 +93,8 @@ namespace FtpDownload
         {
             Console.WriteLine("Emailing files");
             var emailHelper = new EmailHeler();
-            emailHelper.SendEmail(_list);
+          //  emailHelper.SendEmail(_list); // Using postal package
+            emailHelper.SendMail(_list); // no outside help
         }
 
         private static void InsertRecord()
