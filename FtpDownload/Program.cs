@@ -173,7 +173,7 @@ namespace FtpDownload
                         }
                         var ftpFileName = Path.Combine(folderFullPath, fileName);
                       //  Console.WriteLine($"Name: {subFile.Filename}\tSize: {subFile.Size}");
-                        if (File.Exists(ftpFileName))
+                        if (fileTime < new DateTime(2016,1,16) || File.Exists(ftpFileName))
                         {
                            // Console.WriteLine($"{ftpFileName} already exists");
                         }
